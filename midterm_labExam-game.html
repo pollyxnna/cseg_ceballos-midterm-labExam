@@ -1,0 +1,1416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ramen Simulator - Ceballos</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Dela+Gothic+One&display=swap" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(255, 100, 100, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(255, 150, 50, 0.15) 0%, transparent 50%),
+                linear-gradient(135deg, #2c1810 0%, #3a2015 25%, #4a2c1a 50%, #3a2015 75%, #2c1810 100%);
+            background-size: 100% 100%, 100% 100%, 400% 400%;
+            animation: woodGrain 20s ease infinite, lanternGlow 4s ease-in-out infinite;
+            font-family: 'Press Start 2P', 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow: hidden;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            position: relative;
+        }
+        
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                repeating-linear-gradient(90deg, rgba(0,0,0,0.1) 0px, transparent 3px, transparent 8px, rgba(0,0,0,0.1) 11px),
+                repeating-linear-gradient(0deg, rgba(139,69,19,0.05) 0px, transparent 2px, transparent 6px, rgba(139,69,19,0.05) 8px),
+                radial-gradient(circle at 30% 20%, rgba(255, 200, 100, 0.1) 0%, transparent 30%),
+                radial-gradient(circle at 70% 80%, rgba(255, 150, 80, 0.1) 0%, transparent 30%);
+            pointer-events: none;
+        }
+        
+        body::after {
+            content: '🏮';
+            position: absolute;
+            font-size: 60px;
+            top: 5%;
+            left: 10%;
+            animation: sway 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 20px rgba(255, 100, 100, 0.5));
+        }
+        
+        @keyframes lanternGlow {
+            0%, 100% { 
+                background-size: 100% 100%, 100% 100%, 400% 400%;
+            }
+            50% { 
+                background-size: 110% 110%, 110% 110%, 420% 420%;
+            }
+        }
+        
+        @keyframes sway {
+            0%, 100% { transform: translateX(0) rotate(-2deg); }
+            50% { transform: translateX(10px) rotate(2deg); }
+        }
+        
+        @keyframes woodGrain {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 600px;
+            background: linear-gradient(135deg, #2a1810 0%, #3d2415 50%, #2a1810 100%);
+            border: 6px solid #1a1a1a;
+            box-shadow: 
+                0 0 30px rgba(0, 0, 0, 0.9), 
+                0 0 60px rgba(139, 69, 19, 0.4),
+                inset 0 0 20px rgba(139, 69, 19, 0.2);
+        }
+        
+        #gameContainer::before {
+            content: '🏮';
+            position: absolute;
+            font-size: 40px;
+            top: -35px;
+            right: 50px;
+            z-index: 1000;
+            animation: sway 3s ease-in-out infinite 0.5s;
+            filter: drop-shadow(0 0 15px rgba(255, 100, 100, 0.6));
+        }
+        
+        #gameContainer::after {
+            content: '🏮';
+            position: absolute;
+            font-size: 40px;
+            top: -35px;
+            left: 50px;
+            z-index: 1000;
+            animation: sway 3s ease-in-out infinite;
+            filter: drop-shadow(0 0 15px rgba(255, 150, 80, 0.6));
+        }
+
+        canvas {
+            display: block;
+            background: 
+                repeating-linear-gradient(0deg, #8b4513 0px, #8b4513 2px, transparent 2px, transparent 4px),
+                repeating-linear-gradient(90deg, #a0522d 0px, #a0522d 2px, transparent 2px, transparent 4px),
+                repeating-conic-gradient(from 45deg at 10px 10px, #d2691e 0deg, #cd853f 90deg, #d2691e 180deg, #8b4513 270deg, #d2691e 360deg),
+                linear-gradient(135deg, #8b4513 0%, #a0522d 25%, #cd853f 50%, #a0522d 75%, #8b4513 100%);
+            background-size: 4px 4px, 4px 4px, 20px 20px, 100% 100%;
+            background-position: 0 0, 0 0, 0 0, 0 0;
+            image-rendering: pixelated;
+            image-rendering: -moz-crisp-edges;
+            image-rendering: crisp-edges;
+            cursor: crosshair;
+            position: relative;
+        }
+        
+        canvas::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-image: 
+                radial-gradient(circle at 15% 20%, rgba(255, 200, 100, 0.15) 0%, transparent 10%),
+                radial-gradient(circle at 85% 25%, rgba(255, 200, 100, 0.15) 0%, transparent 10%),
+                radial-gradient(circle at 50% 80%, rgba(139, 69, 19, 0.1) 0%, transparent 15%);
+            pointer-events: none;
+        }
+
+        #startScreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                linear-gradient(180deg, rgba(245, 230, 211, 0.95) 0%, rgba(232, 212, 184, 0.95) 50%, rgba(212, 196, 168, 0.95) 100%),
+                url('data:image/svg+xml,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="%23f5e6d3"/><circle cx="20" cy="20" r="15" fill="%23ff6b6b" opacity="0.1"/><circle cx="80" cy="80" r="20" fill="%23ffa500" opacity="0.1"/></svg>');
+            background-size: 100% 100%, 200px 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            transition: opacity 0.3s;
+        }
+        
+        #startScreen::before {
+            content: '🍜';
+            position: absolute;
+            font-size: 80px;
+            top: 20px;
+            opacity: 0.15;
+            animation: float 4s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-20px); }
+        }
+
+        #startScreen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        h1 {
+            font-size: 48px;
+            font-family: 'Dela Gothic One', 'Press Start 2P', serif;
+            font-weight: bold;
+            color: #000;
+            text-shadow: 
+                -3px -3px 0 #fff,
+                3px -3px 0 #fff,
+                -3px 3px 0 #fff,
+                3px 3px 0 #fff,
+                -4px 0 0 #fff,
+                4px 0 0 #fff,
+                0 -4px 0 #fff,
+                0 4px 0 #fff;
+            margin-bottom: 20px;
+            letter-spacing: 2px;
+        }
+
+        .pixel-text {
+            font-size: 16px;
+            color: #000;
+            text-shadow: 3px 3px 0 #888;
+            margin: 10px 0;
+            line-height: 1.8;
+        }
+        
+        .instruction-box {
+            background: rgba(0, 0, 0, 0.7);
+            border: 4px solid #fff;
+            padding: 20px;
+            margin: 20px;
+            max-width: 600px;
+            text-align: left;
+        }
+        
+        .instruction-item {
+            font-size: 12px;
+            color: #ffeb3b;
+            text-shadow: 2px 2px 0 #000;
+            margin: 8px 0;
+        }
+
+        .blink {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50%, 100% { opacity: 1; }
+            25%, 75% { opacity: 0; }
+        }
+
+        #stats {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            color: #fff;
+            font-size: 14px;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 5;
+            line-height: 2;
+        }
+
+        #pauseBtn {
+            position: absolute;
+            top: 55px;
+            right: 10px;
+            background: #ff9800;
+            border: 3px solid #000;
+            color: #fff;
+            font-size: 12px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', 'Courier New', monospace;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 5;
+        }
+
+        #pauseBtn:hover {
+            background: #ffa726;
+            box-shadow: 0 0 15px #ff9800;
+        }
+
+        #timer {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            color: #fff;
+            font-size: 20px;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 5;
+        }
+
+        #gameOver {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 15;
+        }
+
+        #gameOver.show {
+            display: flex;
+        }
+
+        #pauseMenu {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+        }
+
+        #pauseMenu.show {
+            display: flex;
+        }
+
+        .final-score {
+            font-size: 48px;
+            color: #ffff00;
+            text-shadow: 3px 3px 0 #000;
+            margin: 20px 0;
+        }
+
+        button {
+            background: #ff6b6b;
+            border: 4px solid #000;
+            color: #fff;
+            font-size: 16px;
+            padding: 15px 30px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', 'Courier New', monospace;
+            text-shadow: 3px 3px 0 #000;
+            transition: transform 0.1s;
+            margin: 10px;
+            image-rendering: pixelated;
+        }
+
+        button:hover {
+            transform: scale(1.1);
+            background: #ff8888;
+            box-shadow: 0 0 20px #ff6b6b;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+        
+        .btn-secondary {
+            background: #4caf50;
+        }
+        
+        .btn-secondary:hover {
+            background: #66bb6a;
+            box-shadow: 0 0 20px #4caf50;
+        }
+
+        #instructionsModal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.95);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 25;
+            overflow-y: auto;
+        }
+
+        #instructionsModal.show {
+            display: flex;
+        }
+
+        .close-btn {
+            background: #f44336;
+            font-size: 12px;
+            padding: 10px 20px;
+            margin-top: 20px;
+        }
+
+        #instructionBtn {
+            position: absolute;
+            top: 105px;
+            right: 10px;
+            background: #2196f3;
+            border: 3px solid #000;
+            color: #fff;
+            font-size: 12px;
+            padding: 8px 16px;
+            cursor: pointer;
+            font-family: 'Press Start 2P', 'Courier New', monospace;
+            text-shadow: 2px 2px 0 #000;
+            z-index: 5;
+        }
+
+        #instructionBtn:hover {
+            background: #42a5f5;
+            box-shadow: 0 0 15px #2196f3;
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="startScreen">
+            <h1 style="font-family: 'Dela Gothic One', serif !important;">🍜 RAMEN 🍜</h1>
+            <h1 style="font-family: 'Dela Gothic One', serif !important;">SIMULATOR</h1>
+            <div style="margin-top: 40px;">
+                <button id="instructionBtnHome">INSTRUCTIONS</button>
+                <button id="startBtn">START GAME</button>
+            </div>
+            <p class="pixel-text" style="font-size: 10px; margin-top: 15px;">or press SPACE to start</p>
+            <p class="pixel-text" style="font-size: 10px; margin-top: 5px;">🖱️ MOUSE RECOMMENDED 🖱️</p>
+        </div>
+
+        <div id="stats">
+            <div>Score: <span id="score">0</span></div>
+            <div>Bowls: <span id="bowlsServed">0</span></div>
+        </div>
+
+        <div id="timer">
+            Time: <span id="timeLeft">60</span>s
+        </div>
+
+        <button id="pauseBtn" style="display: none;">PAUSE</button>
+
+        <button id="instructionBtn" style="display: none;">HELP</button>
+
+        <canvas id="gameCanvas" width="800" height="600"></canvas>
+
+        <div id="pauseMenu">
+            <h1 style="color: #ffeb3b;">PAUSED</h1>
+            <p class="pixel-text" style="margin: 20px 0;">Game is paused</p>
+            <div style="margin-top: 20px;">
+                <button id="resumeBtn" class="btn-secondary">RESUME</button>
+                <button id="quitBtn">QUIT TO HOME</button>
+            </div>
+            <p class="pixel-text" style="font-size: 12px; margin-top: 20px; color: #aaa;">Press ESC to resume</p>
+        </div>
+
+        <div id="gameOver">
+            <h1 style="color: #ff6b6b;">GAME OVER!</h1>
+            <p class="final-score">Final Score: <span id="finalScore">0</span></p>
+            <p class="pixel-text">Bowls Served: <span id="finalBowls">0</span></p>
+            <div style="margin-top: 30px;">
+                <button id="restartBtn">PLAY AGAIN</button>
+                <button id="homeBtn" class="btn-secondary">BACK TO HOME</button>
+            </div>
+        </div>
+
+        <div id="instructionsModal">
+            <div class="instruction-box" style="max-width: 700px;">
+                <p class="pixel-text" style="color: #ffeb3b; text-align: center; font-size: 18px; margin-bottom: 20px;">
+                    === HOW TO PLAY ===
+                </p>
+                <p class="instruction-item">► LEFT CLICK & DRAG ingredients from bottom</p>
+                <p class="instruction-item">► DROP them in the bowl to add</p>
+                <p class="instruction-item">► CLICK noodles button to add noodles base</p>
+                <p class="instruction-item">► RIGHT CLICK (hold) to view target ramen</p>
+                <p class="instruction-item">► Release right click to continue building</p>
+                <p class="instruction-item">► Match the target ramen exactly</p>
+                <p class="instruction-item">► Press SPACE to submit your bowl</p>
+                <p class="instruction-item">► Perfect match = +100 points +10 seconds!</p>
+                <p class="instruction-item">► Wrong submission = -25 points</p>
+                <p class="instruction-item">► Click ingredient in bowl to remove it</p>
+                <p class="instruction-item">► Make as many bowls as you can before time runs out!</p>
+                <p class="instruction-item">► Press ESC to pause/resume game</p>
+            </div>
+            <button class="close-btn" id="closeInstructionsBtn">CLOSE</button>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Game state
+        let gameState = 'start'; // start, playing, paused, gameOver
+        let score = 0;
+        let bowlsServed = 0;
+        let timeLeft = 90;
+        let gameTimer = null;
+        
+        // Drag state
+        let draggedIngredient = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+        let isDragging = false;
+        let showReference = false;
+        
+        // Current order - now stores positioned ingredients
+        let targetRamen = [];
+        let playerRamen = [];
+        let noodlesInBowl = false;
+        
+        // Ingredients with original positions (source) - with pixelated drawing functions
+        const ingredientSources = [
+            { name: 'egg', x: 50, y: 500, width: 70, height: 70 },
+            { name: 'meat', x: 140, y: 500, width: 70, height: 70 },
+            { name: 'green onion', x: 230, y: 500, width: 70, height: 70 },
+            { name: 'naruto', x: 320, y: 500, width: 70, height: 70 },
+            { name: 'bamboo', x: 410, y: 500, width: 70, height: 70 },
+            { name: 'seaweed', x: 500, y: 500, width: 70, height: 70 }
+        ];
+        
+        // Bowl definition - centered
+        const bowl = {
+            x: 290,
+            y: 200,
+            width: 220,
+            height: 180
+        };
+        
+        // Noodles button
+        const noodlesButton = { x: 590, y: 500, width: 80, height: 70 };
+        
+        const possibleIngredients = ['egg', 'meat', 'green onion', 'naruto', 'bamboo', 'seaweed'];
+        
+        // Draw pixelated ingredient icons
+        function drawEgg(x, y, size) {
+            const s = size / 16;
+            // Egg white (more realistic oval with shading)
+            ctx.fillStyle = '#f5f5f5';
+            for (let i = 3; i < 13; i++) {
+                const width = Math.sin((i / 16) * Math.PI) * 9;
+                ctx.fillRect(x + (8 - width) * s, y + i * s, width * 2 * s, s);
+            }
+            // Highlight on egg white
+            ctx.fillStyle = '#fff';
+            for (let i = 4; i < 7; i++) {
+                const width = Math.sin(((i - 4) / 3) * Math.PI) * 3;
+                ctx.fillRect(x + (6 - width) * s, y + i * s, width * 2 * s, s);
+            }
+            // Egg yolk with gradient
+            ctx.fillStyle = '#ffb300';
+            for (let i = 6; i < 11; i++) {
+                const width = Math.sin(((i - 6) / 5) * Math.PI) * 4;
+                ctx.fillRect(x + (8 - width) * s, y + i * s, width * 2 * s, s);
+            }
+            // Yolk highlight
+            ctx.fillStyle = '#ffd54f';
+            for (let i = 6; i < 9; i++) {
+                const width = Math.sin(((i - 6) / 3) * Math.PI) * 2;
+                ctx.fillRect(x + (7 - width) * s, y + i * s, width * 2 * s, s);
+            }
+            // Shadow on bottom
+            ctx.fillStyle = 'rgba(0,0,0,0.2)';
+            ctx.fillRect(x + 3 * s, y + 11 * s, 10 * s, s);
+        }
+        
+        function drawMeat(x, y, size) {
+            const s = size / 16;
+            // Meat base (darker red)
+            ctx.fillStyle = '#b71c1c';
+            for (let i = 2; i < 14; i++) {
+                for (let j = 2; j < 14; j++) {
+                    ctx.fillRect(x + i * s, y + j * s, s, s);
+                }
+            }
+            // Lighter meat texture
+            ctx.fillStyle = '#d32f2f';
+            for (let i = 3; i < 13; i++) {
+                for (let j = 3; j < 13; j++) {
+                    if ((i + j) % 2 === 0) ctx.fillRect(x + i * s, y + j * s, s, s);
+                }
+            }
+            // Fat marbling (white streaks)
+            ctx.fillStyle = '#ffebee';
+            ctx.fillRect(x + 5 * s, y + 5 * s, 2 * s, s);
+            ctx.fillRect(x + 9 * s, y + 7 * s, 3 * s, s);
+            ctx.fillRect(x + 6 * s, y + 9 * s, 2 * s, s);
+            // Meat highlights
+            ctx.fillStyle = '#ef5350';
+            ctx.fillRect(x + 4 * s, y + 4 * s, 4 * s, 2 * s);
+            ctx.fillRect(x + 9 * s, y + 5 * s, 3 * s, 2 * s);
+            // Shadow/char marks
+            ctx.fillStyle = '#4a0000';
+            ctx.fillRect(x + 3 * s, y + 11 * s, 3 * s, s);
+            ctx.fillRect(x + 10 * s, y + 12 * s, 2 * s, s);
+        }
+        
+        function drawGreenOnion(x, y, size) {
+            const s = size / 16;
+            // Dark green outer
+            ctx.fillStyle = '#2e7d32';
+            ctx.fillRect(x + 4 * s, y + 2 * s, 3 * s, 12 * s);
+            ctx.fillRect(x + 9 * s, y + 2 * s, 3 * s, 12 * s);
+            // Medium green
+            ctx.fillStyle = '#43a047';
+            ctx.fillRect(x + 5 * s, y + 2 * s, 2 * s, 12 * s);
+            ctx.fillRect(x + 10 * s, y + 2 * s, 2 * s, 12 * s);
+            // Light green highlights
+            ctx.fillStyle = '#66bb6a';
+            ctx.fillRect(x + 5 * s, y + 3 * s, 1 * s, 10 * s);
+            ctx.fillRect(x + 10 * s, y + 3 * s, 1 * s, 10 * s);
+            // White inner parts
+            ctx.fillStyle = '#e8f5e9';
+            ctx.fillRect(x + 5 * s, y + 11 * s, 1 * s, 2 * s);
+            ctx.fillRect(x + 10 * s, y + 11 * s, 1 * s, 2 * s);
+        }
+        
+        function drawNaruto(x, y, size) {
+            const s = size / 16;
+            // White base with shading
+            ctx.fillStyle = '#fafafa';
+            for (let i = 4; i < 12; i++) {
+                const width = Math.sin((i / 8) * Math.PI) * 5;
+                ctx.fillRect(x + (8 - width) * s, y + (i + 2) * s, width * 2 * s, s);
+            }
+            // Gray shading on edge
+            ctx.fillStyle = '#e0e0e0';
+            ctx.fillRect(x + 3 * s, y + 7 * s, 1 * s, 4 * s);
+            ctx.fillRect(x + 12 * s, y + 7 * s, 1 * s, 4 * s);
+            // Pink swirl (more defined)
+            ctx.fillStyle = '#ec407a';
+            // Swirl pattern
+            ctx.fillRect(x + 7 * s, y + 6 * s, 3 * s, s);
+            ctx.fillRect(x + 8 * s, y + 7 * s, 3 * s, s);
+            ctx.fillRect(x + 9 * s, y + 8 * s, 2 * s, s);
+            ctx.fillRect(x + 8 * s, y + 9 * s, 3 * s, s);
+            ctx.fillRect(x + 7 * s, y + 10 * s, 2 * s, s);
+            // Lighter pink highlight
+            ctx.fillStyle = '#f48fb1';
+            ctx.fillRect(x + 8 * s, y + 7 * s, 1 * s, s);
+            ctx.fillRect(x + 9 * s, y + 9 * s, 1 * s, s);
+        }
+        
+        function drawBamboo(x, y, size) {
+            const s = size / 16;
+            // Base bamboo color (golden)
+            ctx.fillStyle = '#d4a574';
+            for (let i = 3; i < 13; i++) {
+                for (let j = 3; j < 13; j++) {
+                    ctx.fillRect(x + i * s, y + j * s, s, s);
+                }
+            }
+            // Lighter bamboo tone
+            ctx.fillStyle = '#e5c399';
+            for (let i = 4; i < 12; i++) {
+                for (let j = 4; j < 8; j++) {
+                    if ((i + j) % 2 === 0) ctx.fillRect(x + i * s, y + j * s, s, s);
+                }
+            }
+            // Bamboo segments (dark lines)
+            ctx.fillStyle = '#8b6f47';
+            ctx.fillRect(x + 3 * s, y + 7 * s, 10 * s, s);
+            ctx.fillRect(x + 3 * s, y + 10 * s, 10 * s, s);
+            // Segment details
+            ctx.fillStyle = '#6d5636';
+            ctx.fillRect(x + 5 * s, y + 7 * s, 1 * s, s);
+            ctx.fillRect(x + 8 * s, y + 10 * s, 1 * s, s);
+            // Top triangle shape
+            ctx.fillStyle = '#c9a26f';
+            for (let i = 0; i < 3; i++) {
+                ctx.fillRect(x + (7 + i) * s, y + (3 - i) * s, (3 - i * 2) * s, s);
+            }
+            // Highlight
+            ctx.fillStyle = '#f0ddc0';
+            ctx.fillRect(x + 5 * s, y + 5 * s, 3 * s, 2 * s);
+        }
+        
+        function drawSeaweed(x, y, size) {
+            const s = size / 16;
+            // Very dark green base
+            ctx.fillStyle = '#1b5e20';
+            ctx.fillRect(x + 3 * s, y + 3 * s, 10 * s, 10 * s);
+            // Medium dark green texture
+            ctx.fillStyle = '#2e7d32';
+            for (let i = 4; i < 12; i++) {
+                for (let j = 4; j < 12; j++) {
+                    if ((i * 2 + j) % 3 === 0) ctx.fillRect(x + i * s, y + j * s, s, s);
+                }
+            }
+            // Lighter green spots (seaweed texture)
+            ctx.fillStyle = '#388e3c';
+            ctx.fillRect(x + 5 * s, y + 5 * s, 2 * s, s);
+            ctx.fillRect(x + 8 * s, y + 6 * s, 2 * s, s);
+            ctx.fillRect(x + 6 * s, y + 8 * s, 2 * s, s);
+            ctx.fillRect(x + 9 * s, y + 10 * s, 2 * s, s);
+            // Very dark edges (crispy)
+            ctx.fillStyle = '#0d3310';
+            ctx.fillRect(x + 3 * s, y + 3 * s, 10 * s, s);
+            ctx.fillRect(x + 3 * s, y + 12 * s, 10 * s, s);
+            // Slight shine
+            ctx.fillStyle = '#4caf50';
+            ctx.fillRect(x + 5 * s, y + 4 * s, 1 * s, 2 * s);
+        }
+        
+        function drawNoodles(x, y, size) {
+            const s = size / 16;
+            // Base noodle color (pale yellow)
+            ctx.fillStyle = '#f4e4c1';
+            // Create wavy noodle strands with more detail
+            for (let i = 0; i < 5; i++) {
+                for (let j = 0; j < 14; j++) {
+                    const wave = Math.sin(j * 0.6 + i * 0.8) * 2;
+                    ctx.fillRect(x + (2 + wave + j * 0.8) * s, y + (3 + i * 2) * s, 2 * s, 2 * s);
+                }
+            }
+            // Darker noodle shading
+            ctx.fillStyle = '#d4c4a1';
+            for (let i = 0; i < 4; i++) {
+                for (let j = 0; j < 12; j++) {
+                    const wave = Math.sin(j * 0.6 + i * 0.8 + 0.5) * 2;
+                    ctx.fillRect(x + (3 + wave + j * 0.8) * s, y + (4 + i * 2) * s, 1 * s, s);
+                }
+            }
+            // Highlights (lighter parts)
+            ctx.fillStyle = '#fff9e6';
+            ctx.fillRect(x + 5 * s, y + 4 * s, 3 * s, s);
+            ctx.fillRect(x + 8 * s, y + 7 * s, 3 * s, s);
+            ctx.fillRect(x + 6 * s, y + 10 * s, 3 * s, s);
+        }
+        
+        function drawIngredientIcon(name, x, y, size) {
+            ctx.save();
+            switch(name) {
+                case 'egg': drawEgg(x - size/2, y - size/2, size); break;
+                case 'meat': drawMeat(x - size/2, y - size/2, size); break;
+                case 'green onion': drawGreenOnion(x - size/2, y - size/2, size); break;
+                case 'naruto': drawNaruto(x - size/2, y - size/2, size); break;
+                case 'bamboo': drawBamboo(x - size/2, y - size/2, size); break;
+                case 'seaweed': drawSeaweed(x - size/2, y - size/2, size); break;
+            }
+            ctx.restore();
+        }
+        
+        function generateTargetRamen() {
+            const numIngredients = Math.floor(Math.random() * 3) + 3; // 3-5 ingredients
+            const ramen = [];
+            
+            // Randomly select ingredients
+            const shuffled = [...possibleIngredients].sort(() => Math.random() - 0.5);
+            const selected = shuffled.slice(0, numIngredients);
+            
+            // Position them randomly in the bowl
+            selected.forEach(ingName => {
+                const source = ingredientSources.find(s => s.name === ingName);
+                if (source) {
+                    ramen.push({
+                        name: ingName,
+                        x: bowl.x + 40 + Math.random() * 140,
+                        y: bowl.y + 50 + Math.random() * 90,
+                        width: 32,
+                        height: 32
+                    });
+                }
+            });
+            
+            return ramen;
+        }
+        
+        function drawPixelRect(x, y, width, height, color) {
+            ctx.fillStyle = color;
+            ctx.fillRect(Math.floor(x), Math.floor(y), Math.floor(width), Math.floor(height));
+        }
+        
+        function drawPixelBorder(x, y, width, height, color, thickness = 2) {
+            ctx.strokeStyle = color;
+            ctx.lineWidth = thickness;
+            ctx.strokeRect(Math.floor(x), Math.floor(y), Math.floor(width), Math.floor(height));
+        }
+        
+        function drawPixelLantern(x, y) {
+            // Hanging string
+            drawPixelRect(x + 8, y - 10, 2, 10, '#1a1a1a');
+            
+            // Lantern top cap
+            drawPixelRect(x + 4, y, 10, 3, '#1a1a1a');
+            
+            // Main lantern body (red)
+            drawPixelRect(x, y + 3, 18, 25, '#d32f2f');
+            
+            // Lantern highlight
+            drawPixelRect(x + 2, y + 5, 6, 18, '#ff5252');
+            
+            // Horizontal stripes
+            drawPixelRect(x, y + 10, 18, 2, '#b71c1c');
+            drawPixelRect(x, y + 18, 18, 2, '#b71c1c');
+            
+            // Lantern bottom cap
+            drawPixelRect(x + 4, y + 28, 10, 3, '#1a1a1a');
+            
+            // Glow effect
+            ctx.save();
+            ctx.globalAlpha = 0.3;
+            drawPixelRect(x - 5, y + 8, 28, 15, '#ff6b6b');
+            ctx.restore();
+        }
+        
+        function drawPixelText(text, x, y, size, color, shadow = true) {
+            ctx.font = `bold ${size}px Courier New`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            
+            // White outline for title effect
+            if (shadow && size >= 20) {
+                ctx.strokeStyle = '#ffffff';
+                ctx.lineWidth = Math.max(2, size * 0.12);
+                ctx.lineJoin = 'round';
+                ctx.strokeText(text, Math.floor(x), Math.floor(y));
+            }
+            
+            // Pixelated shadow effect for smaller text
+            if (shadow && size < 20) {
+                ctx.fillStyle = '#000';
+                ctx.fillText(text, Math.floor(x) + 2, Math.floor(y) + 2);
+            }
+            
+            ctx.fillStyle = color;
+            ctx.fillText(text, Math.floor(x), Math.floor(y));
+        }
+        
+        function drawBowl(showContents = true) {
+            // Simple 2D top-down view of Japanese ramen bowl
+            const centerX = bowl.x + bowl.width / 2;
+            const centerY = bowl.y + bowl.height / 2;
+            const radius = bowl.width / 2;
+            
+            // Outer black rim (bowl exterior)
+            ctx.fillStyle = '#1a1a1a';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Black rim edge (slightly lighter)
+            ctx.fillStyle = '#2a2a2a';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius - 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Red inner bowl
+            ctx.fillStyle = '#8b0000';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius - 15, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Darker red inner ring
+            ctx.fillStyle = '#6b0000';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius - 20, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Broth (golden brown)
+            ctx.fillStyle = '#c9a26a';
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius - 25, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Broth highlight (lighter area)
+            ctx.fillStyle = '#d4b574';
+            ctx.beginPath();
+            ctx.arc(centerX - 20, centerY - 15, 35, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Oil spots on broth
+            ctx.fillStyle = 'rgba(255, 215, 100, 0.6)';
+            ctx.beginPath();
+            ctx.arc(centerX + 30, centerY + 20, 15, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = 'rgba(255, 200, 80, 0.5)';
+            ctx.beginPath();
+            ctx.arc(centerX - 35, centerY + 10, 10, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(centerX + 40, centerY - 25, 8, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw noodles if added
+            if (showContents && noodlesInBowl) {
+                ctx.save();
+                // Clip to broth area
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius - 25, 0, Math.PI * 2);
+                ctx.clip();
+                
+                // Simple wavy noodle strands
+                for (let i = 0; i < 8; i++) {
+                    ctx.strokeStyle = i % 2 === 0 ? '#f4e4c1' : '#e5d4b0';
+                    ctx.lineWidth = 3;
+                    ctx.beginPath();
+                    const angle = (i / 8) * Math.PI * 2;
+                    const startX = centerX + Math.cos(angle) * 20;
+                    const startY = centerY + Math.sin(angle) * 20;
+                    ctx.moveTo(startX, startY);
+                    for (let j = 0; j < 15; j++) {
+                        const x = startX + Math.cos(angle + j * 0.3) * j * 5;
+                        const y = startY + Math.sin(angle + j * 0.3) * j * 5;
+                        ctx.lineTo(x, y);
+                    }
+                    ctx.stroke();
+                }
+                ctx.restore();
+            }
+            
+            // Draw ingredients in bowl
+            if (showContents && playerRamen.length > 0) {
+                ctx.save();
+                // Clip to broth area
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius - 25, 0, Math.PI * 2);
+                ctx.clip();
+                
+                playerRamen.forEach(ing => {
+                    drawIngredientIcon(ing.name, ing.x, ing.y, 32);
+                });
+                ctx.restore();
+            }
+        }
+        
+        function drawReferenceView() {
+            // Semi-transparent overlay
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Reference bowl (centered and larger)
+            const refCenterX = canvas.width / 2;
+            const refCenterY = canvas.height / 2;
+            const refRadius = 150;
+            
+            // Outer black rim
+            ctx.fillStyle = '#1a1a1a';
+            ctx.beginPath();
+            ctx.arc(refCenterX, refCenterY, refRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Black rim edge
+            ctx.fillStyle = '#2a2a2a';
+            ctx.beginPath();
+            ctx.arc(refCenterX, refCenterY, refRadius - 10, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Red inner bowl
+            ctx.fillStyle = '#8b0000';
+            ctx.beginPath();
+            ctx.arc(refCenterX, refCenterY, refRadius - 18, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Darker red inner ring
+            ctx.fillStyle = '#6b0000';
+            ctx.beginPath();
+            ctx.arc(refCenterX, refCenterY, refRadius - 25, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Broth
+            ctx.fillStyle = '#c9a26a';
+            ctx.beginPath();
+            ctx.arc(refCenterX, refCenterY, refRadius - 30, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Broth highlight
+            ctx.fillStyle = '#d4b574';
+            ctx.beginPath();
+            ctx.arc(refCenterX - 25, refCenterY - 20, 45, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Oil spots
+            ctx.fillStyle = 'rgba(255, 215, 100, 0.6)';
+            ctx.beginPath();
+            ctx.arc(refCenterX + 40, refCenterY + 30, 20, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = 'rgba(255, 200, 80, 0.5)';
+            ctx.beginPath();
+            ctx.arc(refCenterX - 45, refCenterY + 15, 12, 0, Math.PI * 2);
+            ctx.fill();
+            
+            // Draw noodles
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(refCenterX, refCenterY, refRadius - 30, 0, Math.PI * 2);
+            ctx.clip();
+            
+            for (let i = 0; i < 10; i++) {
+                ctx.strokeStyle = i % 2 === 0 ? '#f4e4c1' : '#e5d4b0';
+                ctx.lineWidth = 4;
+                ctx.beginPath();
+                const angle = (i / 10) * Math.PI * 2;
+                const startX = refCenterX + Math.cos(angle) * 30;
+                const startY = refCenterY + Math.sin(angle) * 30;
+                ctx.moveTo(startX, startY);
+                for (let j = 0; j < 18; j++) {
+                    const x = startX + Math.cos(angle + j * 0.3) * j * 6;
+                    const y = startY + Math.sin(angle + j * 0.3) * j * 6;
+                    ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+            ctx.restore();
+            
+            // Draw target ingredients
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(refCenterX, refCenterY, refRadius - 30, 0, Math.PI * 2);
+            ctx.clip();
+            
+            const scaleX = (refRadius * 2) / bowl.width;
+            const scaleY = (refRadius * 2) / bowl.height;
+            const bowlCenterX = bowl.x + bowl.width / 2;
+            const bowlCenterY = bowl.y + bowl.height / 2;
+            
+            targetRamen.forEach(ing => {
+                const offsetX = ing.x - bowlCenterX;
+                const offsetY = ing.y - bowlCenterY;
+                const scaledX = refCenterX + offsetX * scaleX;
+                const scaledY = refCenterY + offsetY * scaleY;
+                drawIngredientIcon(ing.name, scaledX, scaledY, 40);
+            });
+            ctx.restore();
+            
+            // Title
+            drawPixelText('TARGET RAMEN', canvas.width / 2, 50, 20, '#ffeb3b');
+            drawPixelText('(Hold Right Click to View)', canvas.width / 2, canvas.height - 30, 12, '#aaa');
+        }
+        
+        function drawIngredientSources() {
+            ingredientSources.forEach(ing => {
+                // Skip if being dragged
+                if (draggedIngredient && draggedIngredient.name === ing.name && isDragging) return;
+                
+                // Draw ingredient box with pixelated 3D effect
+                drawPixelRect(ing.x + 3, ing.y + 3, ing.width, ing.height, '#000'); // Shadow
+                drawPixelRect(ing.x, ing.y, ing.width, ing.height, '#876543');
+                drawPixelRect(ing.x + 4, ing.y + 4, ing.width - 8, ing.height - 8, '#654321');
+                
+                // Pixelated border
+                for (let i = 0; i < 2; i++) {
+                    drawPixelBorder(ing.x + i, ing.y + i, ing.width - i * 2, ing.height - i * 2, '#000', 1);
+                }
+                
+                // Draw ingredient icon
+                drawIngredientIcon(ing.name, ing.x + ing.width / 2, ing.y + 25, 32);
+                
+                // Draw name
+                ctx.font = 'bold 8px Courier New';
+                ctx.fillStyle = '#ffeb3b';
+                ctx.textAlign = 'center';
+                ctx.fillText(ing.name.toUpperCase(), ing.x + ing.width / 2, ing.y + ing.height - 8);
+            });
+            
+            // Draw noodles button
+            drawPixelRect(noodlesButton.x + 3, noodlesButton.y + 3, noodlesButton.width, noodlesButton.height, '#000');
+            const noodleColor = noodlesInBowl ? '#666' : '#4caf50';
+            drawPixelRect(noodlesButton.x, noodlesButton.y, noodlesButton.width, noodlesButton.height, noodleColor);
+            for (let i = 0; i < 3; i++) {
+                drawPixelBorder(noodlesButton.x + i, noodlesButton.y + i, noodlesButton.width - i * 2, noodlesButton.height - i * 2, '#000', 1);
+            }
+            drawNoodles(noodlesButton.x + noodlesButton.width / 2, noodlesButton.y + 25, 32);
+            ctx.font = 'bold 8px Courier New';
+            ctx.fillStyle = '#fff';
+            ctx.textAlign = 'center';
+            ctx.fillText('NOODLES', noodlesButton.x + noodlesButton.width / 2, noodlesButton.y + noodlesButton.height - 8);
+            
+            // Draw dragged ingredient on top
+            if (draggedIngredient && isDragging) {
+                const mousePos = { x: draggedIngredient.x, y: draggedIngredient.y };
+                drawPixelRect(mousePos.x - 25 + 3, mousePos.y - 25 + 3, 50, 50, '#000');
+                drawPixelRect(mousePos.x - 25, mousePos.y - 25, 50, 50, '#876543');
+                drawIngredientIcon(draggedIngredient.name, mousePos.x, mousePos.y, 40);
+            }
+        }
+        
+        function drawGameInfo() {
+            // Small info text at top left (below stats)
+            ctx.font = 'bold 10px Courier New';
+            ctx.fillStyle = '#ffeb3b';
+            ctx.textAlign = 'left';
+            ctx.fillText('RIGHT CLICK (hold) = view target', 10, 80);
+            ctx.fillText('SPACE = submit bowl', 10, 95);
+            ctx.textAlign = 'center';
+        }
+        
+        function drawGame() {
+            // Clear canvas with ramen restaurant background
+            ctx.fillStyle = '#8b4513';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw pixelated wooden wall pattern
+            for (let i = 0; i < canvas.width; i += 20) {
+                for (let j = 0; j < 470; j += 20) {
+                    const shade = ((i / 20 + j / 20) % 3 === 0) ? '#a0522d' : ((i / 20 + j / 20) % 3 === 1) ? '#8b4513' : '#cd853f';
+                    drawPixelRect(i, j, 20, 20, shade);
+                    // Wood grain
+                    const grainShade = ((i / 20) % 2 === 0) ? 'rgba(139, 69, 19, 0.2)' : 'rgba(205, 133, 63, 0.1)';
+                    drawPixelRect(i + 2, j + 2, 16, 2, grainShade);
+                    drawPixelRect(i + 2, j + 12, 16, 2, grainShade);
+                }
+            }
+            
+            // Add decorative lanterns on walls
+            drawPixelLantern(50, 40);
+            drawPixelLantern(canvas.width - 70, 40);
+            drawPixelLantern(canvas.width / 2 - 10, 30);
+            
+            // Draw counter with darker wood texture
+            for (let i = 0; i < canvas.width; i += 15) {
+                for (let j = 470; j < 600; j += 15) {
+                    const shade = ((i / 15 + j / 15) % 2 === 0) ? '#5d4e37' : '#4d3e27';
+                    drawPixelRect(i, j, 15, 15, shade);
+                    // Counter grain
+                    drawPixelRect(i + 1, j + 5, 13, 1, 'rgba(93, 78, 55, 0.3)');
+                }
+            }
+            drawPixelRect(0, 470, canvas.width, 8, '#2d1f0f');
+            
+            drawGameInfo();
+            drawBowl();
+            drawIngredientSources();
+            
+            // Show reference overlay if right click held
+            if (showReference) {
+                drawReferenceView();
+            }
+        }
+        
+        function checkAccuracy() {
+            // Must have noodles
+            if (!noodlesInBowl) return { match: false, accuracy: 0 };
+            
+            // Must have same number of ingredients
+            if (playerRamen.length !== targetRamen.length) return { match: false, accuracy: 0 };
+            
+            // Check if all ingredients match (by type)
+            const playerIngredients = playerRamen.map(i => i.name).sort();
+            const targetIngredients = targetRamen.map(i => i.name).sort();
+            
+            let correctCount = 0;
+            for (let i = 0; i < playerIngredients.length; i++) {
+                if (playerIngredients[i] === targetIngredients[i]) {
+                    correctCount++;
+                }
+            }
+            
+            const accuracy = (correctCount / targetIngredients.length) * 100;
+            const match = accuracy === 100;
+            
+            return { match, accuracy };
+        }
+        
+        function submitBowl() {
+            const result = checkAccuracy();
+            
+            if (result.match && noodlesInBowl) {
+                // Perfect match!
+                score += 100;
+                bowlsServed++;
+                timeLeft += 10; // Bonus time!
+                
+                // Flash green
+                ctx.fillStyle = 'rgba(76, 175, 80, 0.5)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                drawPixelText('PERFECT! +10 SECONDS!', canvas.width / 2, canvas.height / 2, 24, '#4caf50');
+                
+                setTimeout(() => {
+                    // New ramen
+                    targetRamen = generateTargetRamen();
+                    playerRamen = [];
+                    noodlesInBowl = false;
+                    updateUI();
+                    drawGame();
+                }, 500);
+            } else {
+                // Incorrect
+                score = Math.max(0, score - 25);
+                
+                // Flash red
+                ctx.fillStyle = 'rgba(244, 67, 54, 0.5)';
+                ctx.fillRect(0, 0, canvas.width, canvas.height);
+                drawPixelText('NOT QUITE... TRY AGAIN', canvas.width / 2, canvas.height / 2, 20, '#f44336');
+                
+                setTimeout(() => {
+                    updateUI();
+                    drawGame();
+                }, 500);
+            }
+        }
+        
+        function updateUI() {
+            document.getElementById('score').textContent = score;
+            document.getElementById('bowlsServed').textContent = bowlsServed;
+            document.getElementById('timeLeft').textContent = timeLeft;
+        }
+        
+        function startGame() {
+            gameState = 'playing';
+            score = 0;
+            bowlsServed = 0;
+            timeLeft = 90;
+            targetRamen = generateTargetRamen();
+            playerRamen = [];
+            noodlesInBowl = false;
+            
+            document.getElementById('startScreen').classList.add('hidden');
+            document.getElementById('gameOver').classList.remove('show');
+            document.getElementById('pauseMenu').classList.remove('show');
+            document.getElementById('pauseBtn').style.display = 'block';
+            document.getElementById('instructionBtn').style.display = 'block';
+            
+            updateUI();
+            
+            // Main game timer - runs every 1 second for real-time
+            if (gameTimer) clearInterval(gameTimer);
+            gameTimer = setInterval(() => {
+                if (gameState === 'playing') {
+                    timeLeft--;
+                    
+                    if (timeLeft <= 0) {
+                        endGame();
+                    }
+                    
+                    updateUI();
+                }
+            }, 1000);
+            
+            drawGame();
+        }
+        
+        function pauseGame() {
+            if (gameState !== 'playing') return;
+            gameState = 'paused';
+            document.getElementById('pauseMenu').classList.add('show');
+        }
+        
+        function resumeGame() {
+            if (gameState !== 'paused') return;
+            gameState = 'playing';
+            document.getElementById('pauseMenu').classList.remove('show');
+            drawGame();
+        }
+        
+        function quitToHome() {
+            gameState = 'start';
+            if (gameTimer) clearInterval(gameTimer);
+            document.getElementById('pauseMenu').classList.remove('show');
+            document.getElementById('gameOver').classList.remove('show');
+            document.getElementById('startScreen').classList.remove('hidden');
+            document.getElementById('pauseBtn').style.display = 'none';
+            document.getElementById('instructionBtn').style.display = 'none';
+            showReference = false;
+            isDragging = false;
+            draggedIngredient = null;
+            drawGame();
+        }
+        
+        function endGame() {
+            gameState = 'gameOver';
+            if (gameTimer) clearInterval(gameTimer);
+            
+            document.getElementById('finalScore').textContent = score;
+            document.getElementById('finalBowls').textContent = bowlsServed;
+            document.getElementById('gameOver').classList.add('show');
+            document.getElementById('pauseBtn').style.display = 'none';
+            document.getElementById('instructionBtn').style.display = 'none';
+        }
+        
+        // Mouse event listeners
+        canvas.addEventListener('mousedown', (e) => {
+            if (gameState !== 'playing' && gameState !== 'paused') return;
+            if (gameState === 'paused') return;
+            if (e.button !== 0) return; // Only left click
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Check noodles button
+            if (x >= noodlesButton.x && x <= noodlesButton.x + noodlesButton.width &&
+                y >= noodlesButton.y && y <= noodlesButton.y + noodlesButton.height) {
+                noodlesInBowl = true;
+                drawGame();
+                return;
+            }
+            
+            // Check if clicking on ingredient source
+            for (let ing of ingredientSources) {
+                if (x >= ing.x && x <= ing.x + ing.width &&
+                    y >= ing.y && y <= ing.y + ing.height) {
+                    isDragging = true;
+                    draggedIngredient = {
+                        name: ing.name,
+                        x: x,
+                        y: y
+                    };
+                    return;
+                }
+            }
+            
+            // Check if clicking on ingredient in bowl to remove
+            for (let i = playerRamen.length - 1; i >= 0; i--) {
+                const ing = playerRamen[i];
+                if (x >= ing.x - 20 && x <= ing.x + 20 &&
+                    y >= ing.y - 20 && y <= ing.y + 20) {
+                    playerRamen.splice(i, 1);
+                    drawGame();
+                    return;
+                }
+            }
+        });
+        
+        canvas.addEventListener('mousemove', (e) => {
+            if (!isDragging || !draggedIngredient || gameState !== 'playing') return;
+            
+            const rect = canvas.getBoundingClientRect();
+            draggedIngredient.x = e.clientX - rect.left;
+            draggedIngredient.y = e.clientY - rect.top;
+            
+            drawGame();
+        });
+        
+        canvas.addEventListener('mouseup', (e) => {
+            if (!isDragging || !draggedIngredient || gameState !== 'playing') return;
+            if (e.button !== 0) return;
+            
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Check if dropped in bowl
+            if (x >= bowl.x && x <= bowl.x + bowl.width &&
+                y >= bowl.y && y <= bowl.y + bowl.height) {
+                // Add to player ramen
+                playerRamen.push({
+                    name: draggedIngredient.name,
+                    x: x,
+                    y: y,
+                    width: 32,
+                    height: 32
+                });
+            }
+            
+            isDragging = false;
+            draggedIngredient = null;
+            drawGame();
+        });
+        
+        // Right click to show/hide reference
+        canvas.addEventListener('mousedown', (e) => {
+            if (e.button === 2) { // Right click
+                e.preventDefault();
+                if (gameState !== 'playing') return;
+                showReference = true;
+                drawGame();
+            }
+        });
+        
+        canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault(); // Prevent context menu
+        });
+        
+        canvas.addEventListener('mouseup', (e) => {
+            if (e.button === 2) { // Right click released
+                showReference = false;
+                if (gameState === 'playing') drawGame();
+            }
+        });
+        
+        document.addEventListener('mouseup', (e) => {
+            if (e.button === 2) {
+                showReference = false;
+                if (gameState === 'playing') drawGame();
+            }
+        });
+        
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                e.preventDefault();
+                if (gameState === 'start') {
+                    startGame();
+                } else if (gameState === 'playing') {
+                    submitBowl();
+                }
+            } else if (e.code === 'Escape') {
+                e.preventDefault();
+                if (gameState === 'playing') {
+                    pauseGame();
+                } else if (gameState === 'paused') {
+                    resumeGame();
+                }
+            }
+        });
+        
+        document.getElementById('startBtn').addEventListener('click', () => {
+            startGame();
+        });
+        
+        document.getElementById('pauseBtn').addEventListener('click', () => {
+            pauseGame();
+        });
+        
+        document.getElementById('resumeBtn').addEventListener('click', () => {
+            resumeGame();
+        });
+        
+        document.getElementById('quitBtn').addEventListener('click', () => {
+            quitToHome();
+        });
+        
+        document.getElementById('restartBtn').addEventListener('click', () => {
+            startGame();
+        });
+        
+        document.getElementById('homeBtn').addEventListener('click', () => {
+            quitToHome();
+        });
+        
+        document.getElementById('instructionBtnHome').addEventListener('click', () => {
+            document.getElementById('instructionsModal').classList.add('show');
+        });
+        
+        document.getElementById('instructionBtn').addEventListener('click', () => {
+            document.getElementById('instructionsModal').classList.add('show');
+        });
+        
+        document.getElementById('closeInstructionsBtn').addEventListener('click', () => {
+            document.getElementById('instructionsModal').classList.remove('show');
+        });
+        
+        // Initial draw
+        drawGame();
+    </script>
+</body>
+</html>
